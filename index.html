@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lorcana — coleção e meta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Serif+4:opsz,wght@8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{--ground:#EEF0EC;--surface:#FBFCFA;--ink:#171A16;--muted:#5C6359;--faint:#868D82;--rule:#D7DCD3;--rule2:#C3C9BE;--accent:#8E560F}
+@media (prefers-color-scheme:dark){:root{--ground:#131611;--surface:#1A1E17;--ink:#E9EBE4;--muted:#9BA392;--faint:#7C8474;--rule:#2B3126;--rule2:#3A4234;--accent:#D9A23F}}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:"Source Serif 4",Georgia,serif;font-size:17px;line-height:1.6;margin:0;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:80px 24px 96px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(36px,6vw,58px);letter-spacing:-.015em;line-height:1.08;margin:12px 0 0}
+.sub{color:var(--muted);margin:16px 0 0;max-width:58ch}
+.cards{display:grid;gap:18px;margin-top:46px}
+a.card{display:block;background:var(--surface);border:1px solid var(--rule2);border-left:4px solid var(--accent);border-radius:3px;padding:22px 24px;text-decoration:none;color:inherit;transition:transform .12s ease}
+a.card:hover{transform:translateY(-2px)}
+a.card h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:21px;margin:0 0 8px}
+a.card p{margin:0;color:var(--muted);font-size:15px}
+footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--rule);font-size:13px;color:var(--faint);font-family:"IBM Plex Mono",monospace}
+</style>
+<div class="wrap">
+  <p class="eyebrow">Disney Lorcana</p>
+  <h1>Coleção e meta</h1>
+  <p class="sub">Duas páginas geradas a partir do meu repositório de coleção: o que eu tenho, carta por carta, e como isso se cruza com os decks do topo do meta Core.</p>
+  <div class="cards">
+    <a class="card" href="colecao.html">
+      <h2>Minha coleção →</h2>
+      <p>As 449 cartas diferentes que eu tenho, com busca por nome e filtros por coleção, tinta, tipo e raridade. Clique numa carta para ver as regras e o histórico de compra.</p>
+    </a>
+    <a class="card" href="meta-tier1.html">
+      <h2>Decks tier 1 do meta Core →</h2>
+      <p>Os arquétipos de topo do ladder Core do duels.ink cruzados com a coleção: quanto de cada lista eu já tenho, os combos de cada deck e o custo na LigaLorcana para completar.</p>
+    </a>
+  </div>
+  <footer>Dados: duels.ink (meta), LigaLorcana (preços), LorcanaJSON (catálogo). Imagens: Ravensburger. Disney Lorcana é copyright Disney.</footer>
+</div>
+</html>
