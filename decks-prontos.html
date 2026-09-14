@@ -314,9 +314,12 @@ ul.combos li:last-child{margin-bottom:0}
 .sw input:checked ~ i{color:var(--ink)}
 /* estado da carta: completa, parcial, ausente */
 .fq.ok{color:var(--good)} .fq.part{color:var(--accent)} .fq.miss{color:var(--bad)}
-.fchip.q.ok{background:var(--good)}
-.fchip.q.part{background:var(--accent)}
-.fchip.q.miss{background:var(--bad)}
+.qv{display:inline-block;min-width:36px;text-align:center;border-radius:999px;padding:3px 9px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;font-weight:600;
+  color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);background:var(--bad)}
+.qv.ok{background:var(--good)}
+.qv.part{background:var(--accent)}
+.qv.miss{background:var(--bad)}
 .fbox[data-tudo="1"] .fc .fcimg img{opacity:1}
 
 /* grade de imagens */
@@ -336,6 +339,20 @@ ul.combos li:last-child{margin-bottom:0}
 .fbox[data-view="lista"] .fgrid{display:none}
 .fbox[data-view="grade"] .flista{display:none}
 .fbox[data-view="grade"]{max-width:860px}
+/* ajuste visual da quantidade: so simulacao, nada e gravado */
+.qbox{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto}
+.pm{width:26px;height:26px;border:1px solid var(--rule2);background:var(--surface2);color:var(--ink);
+  border-radius:3px;cursor:pointer;font-size:15px;line-height:1;padding:0;transition:background .1s ease}
+.pm:hover:not(:disabled){background:var(--accent);color:var(--ground);border-color:var(--accent)}
+.pm:disabled{opacity:.35;cursor:default}
+.flista .qbox{margin-right:10px}
+.fc .qbox{display:flex;justify-content:center;margin-top:8px}
+.fsim{margin-left:auto;align-self:center}
+.fsim button{background:none;border:1px solid var(--rule2);border-radius:3px;color:var(--muted);
+  cursor:pointer;padding:6px 12px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.fsim button:hover{color:var(--ink);border-color:var(--ink)}
+.fstats{align-items:center}
 .fbox[data-precos="0"] .fp,
 .fbox[data-precos="0"] .fchip.pz,
 .fbox[data-precos="0"] .ftot{display:none}
@@ -1549,55 +1566,84 @@ let faltaAtual = null;
 
 function classeCarta(c) { return c.falta === 0 ? 'ok' : (c.tem ? 'part' : 'miss'); }
 
+// ajuste local so para simular: nao altera nada do deck, some ao fechar o modal
+let ajuste = {};
+
 function render() {
   const d = faltaAtual; if (!d) return;
   const tudo = fbox().dataset.tudo === '1';
-  const cartas = tudo
-      ? d.cartas.slice().sort((a, b) => a.custo - b.custo || a.nome.localeCompare(b.nome))
-      : d.cartas.filter((c) => c.falta > 0)
-          .sort((a, b) => (b.falta * b.med) - (a.falta * a.med));
-  // no modo "deck inteiro" o numero exibido e quantas copias o deck pede, nao quantas faltam
-  const qtd = (c) => tudo ? c.qtd : c.falta;
-  const preco = (c) => fbrl(c.min * qtd(c));
+  const cartas = d.cartas.map((c, i) => [c, i])
+      .filter(([c]) => tudo || c.falta > 0)
+      .sort(tudo ? (a, b) => a[0].custo - b[0].custo || a[0].nome.localeCompare(b[0].nome)
+                 : (a, b) => (b[0].falta * b[0].med) - (a[0].falta * a[0].med));
+  // no modo "deck inteiro" a base e quantas copias o deck pede; no outro, quantas faltam
+  const base = (c) => tudo ? c.qtd : c.falta;
+  const qtd = (c, i) => (ajuste[i] !== undefined ? ajuste[i] : base(c));
+  const preco = (c, i) => fbrl(c.min * qtd(c, i));
+  const pm = (c, i, max) =>
+      '<span class="qbox">' +
+        '<button type="button" class="pm" data-i="' + i + '" data-d="-1"' +
+          (qtd(c, i) <= 0 ? ' disabled' : '') + ' aria-label="tirar uma">−</button>' +
+        '<span class="qv ' + classeCarta(c) + '">' + qtd(c, i) + '×</span>' +
+        '<button type="button" class="pm" data-i="' + i + '" data-d="1"' +
+          (qtd(c, i) >= max ? ' disabled' : '') + ' aria-label="somar uma">+</button>' +
+      '</span>';
+  const copias = cartas.reduce((s, [c, i]) => s + qtd(c, i), 0);
+  const soma = cartas.reduce((s, [c, i]) => s + c.min * qtd(c, i), 0);
+  const mexido = Object.keys(ajuste).length > 0;
 
-  $f('f-stats').innerHTML = tudo
-      ? '<div><b>' + d.total + '</b><span>cartas no deck</span></div>' +
-        '<div><b>' + d.cartas.length + '</b><span>cartas diferentes</span></div>' +
+  $f('f-stats').innerHTML = (tudo
+      ? '<div><b>' + copias + '</b><span>cartas no deck</span></div>' +
+        '<div><b>' + cartas.length + '</b><span>cartas diferentes</span></div>' +
         '<div><b class="good">' + d.tem + '/' + d.total + '</b><span>você já tem</span></div>' +
         '<div><b class="bad">' + d.falta + '</b><span>a comprar</span></div>'
-      : '<div><b class="bad">' + d.falta + '</b><span>cópias a comprar</span></div>' +
+      : '<div><b class="bad">' + copias + '</b><span>cópias a comprar</span></div>' +
         '<div><b>' + cartas.length + '</b><span>cartas diferentes</span></div>' +
-        '<div><b class="good">' + d.tem + '/' + d.total + '</b><span>você já tem</span></div>';
+        '<div><b class="good">' + d.tem + '/' + d.total + '</b><span>você já tem</span></div>')
+      + (mexido ? '<div class="fsim"><button type="button" id="f-reset">desfazer simulação</button></div>' : '');
 
-  $f('f-lista').innerHTML = cartas.map((c) =>
-      '<li><span class="fq ' + classeCarta(c) + '">' + qtd(c) + '×</span>' +
+  $f('f-lista').innerHTML = cartas.map(([c, i]) =>
+      '<li>' + pm(c, i, tudo ? 4 : c.qtd) +
       '<span class="fn">' + c.nome +
         '<small>' + c.ed + ' #' + c.num + ' · ' + c.custo + ' ⬡ · ' +
         (tudo ? 'você tem ' + Math.min(c.tem, c.qtd) + ' das ' + c.qtd +
                 (c.falta ? ' · faltam ' + c.falta : '')
               : 'o deck pede ' + c.qtd + ' · você tem ' + c.tem) +
         '</small></span>' +
-      '<span class="fp">' + preco(c) + '</span></li>').join('');
+      '<span class="fp">' + preco(c, i) + '</span></li>').join('');
 
-  $f('f-grade').innerHTML = cartas.map((c) =>
+  $f('f-grade').innerHTML = cartas.map(([c, i]) =>
       '<figure class="fc"><div class="fcimg">' +
         '<img loading="lazy" src="' + c.img + '" alt="' + c.nome.replace(/"/g, '&quot;') + '">' +
-        '<span class="fchip q ' + classeCarta(c) + '">' + qtd(c) + '×</span>' +
-        '<span class="fchip pz">' + preco(c) + '</span>' +
+        '<span class="fchip pz">' + preco(c, i) + '</span>' +
       '</div><figcaption>' + c.nome +
         '<small>' + c.ed + ' #' + c.num + ' · ' +
         (tudo ? (c.falta ? 'faltam ' + c.falta : 'completa') : 'de ' + c.qtd) +
-        '</small></figcaption></figure>').join('');
+        '</small></figcaption>' +
+      pm(c, i, tudo ? 4 : c.qtd) +
+      '</figure>').join('');
 
-  $f('f-totlabel').textContent = tudo
+  $f('f-totlabel').textContent = (tudo
       ? 'deck inteiro pelo menor preço da LigaLorcana'
-      : 'soma pelo menor preço da LigaLorcana';
-  $f('f-total').textContent = fbrl(tudo ? d.totMin : d.min);
+      : 'soma pelo menor preço da LigaLorcana') + (mexido ? ' · simulação' : '');
+  $f('f-total').textContent = fbrl(soma);
+}
+
+function ajustar(i, delta, max) {
+  const d = faltaAtual; if (!d) return;
+  const tudo = fbox().dataset.tudo === '1';
+  const c = d.cartas[i];
+  const teto = tudo ? 4 : c.qtd;
+  const atual = ajuste[i] !== undefined ? ajuste[i] : (tudo ? c.qtd : c.falta);
+  const novo = Math.max(0, Math.min(teto, atual + delta));
+  // voltou ao valor real da coleção: sai da simulação
+  if (novo === (tudo ? c.qtd : c.falta)) delete ajuste[i]; else ajuste[i] = novo;
+  render();
 }
 
 function abrirFalta(i) {
   const d = FALTAS[i]; if (!d) return;
-  faltaAtual = d;
+  faltaAtual = d; ajuste = {};
   $f('f-tintas').textContent = d.tintas + ' · o que falta comprar';
   $f('f-deck').textContent = d.deck;
   render();
@@ -1620,6 +1666,7 @@ function setPrecos(on) {
 }
 function setTudo(on) {
   fbox().dataset.tudo = on ? '1' : '0';
+  ajuste = {};
   $f('f-tudo').checked = on;
   try { localStorage.setItem('faltaTudo', on ? '1' : '0'); } catch (e) {}
   render();
@@ -1635,6 +1682,9 @@ document.addEventListener('click', (e) => {
   if (b) { abrirFalta(+b.dataset.f); return; }
   const v = e.target.closest('.seg button[data-view]');
   if (v) { setView(v.dataset.view); return; }
+  const q = e.target.closest('button.pm');
+  if (q) { ajustar(+q.dataset.i, +q.dataset.d); return; }
+  if (e.target.closest('#f-reset')) { ajuste = {}; render(); return; }
   if (e.target.closest('[data-fechar-falta]')) fecharFalta();
 });
 document.addEventListener('change', (e) => {
